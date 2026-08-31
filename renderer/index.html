@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline' 'unsafe-eval';">
+  <title>AI Desktop OS</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+</head>
+
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="window-controls">
+          <button class="control close" id="closeBtn" title="Close"></button>
+          <button class="control minimize" id="minimizeBtn" title="Minimize"></button>
+          <button class="control maximize" id="maximizeBtn" title="Maximize"></button>
+        </div>
+        <div class="logo">
+          <img src="../assets/image/logo.jpg" alt="ZET AI OS Logo" class="logo-image">
+          <span>ZET AI OS</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-view="chat">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
+          <span>Chat</span>
+        </button>
+        <button class="nav-item" data-view="voice">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+            <line x1="12" y1="19" x2="12" y2="23" />
+            <line x1="8" y1="23" x2="16" y2="23" />
+          </svg>
+          <span>Voice</span>
+        </button>
+        <button class="nav-item" data-view="writer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+          </svg>
+          <span>Writer</span>
+        </button>
+        <button class="nav-item" data-view="automation">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+            <line x1="8" y1="21" x2="16" y2="21" />
+            <line x1="12" y1="17" x2="12" y2="21" />
+          </svg>
+          <span>Automation</span>
+        </button>
+        <button class="nav-item" data-view="workflows">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+          </svg>
+          <span>Workflows</span>
+        </button>
+        <button class="nav-item" data-view="settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3" />
+            <path
+              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          </svg>
+          <span>Settings</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="api-status" id="apiStatus">
+          <span class="status-dot offline"></span>
+          <span>API Offline</span>
+        </div>
+        <div class="version">v1.0.0</div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Chat View -->
+      <div class="view active" id="chatView">
+
+        <div class="chat-container">
+          <div class="chat-messages" id="chatMessages">
+            <div class="welcome-message">
+              <h3>Welcome to AI Desktop Assistant</h3>
+              <p>I'm your personal AI assistant. I can help you with:</p>
+              <div class="feature-list">
+                <span class="feature-tag">General Chat</span>
+                <span class="feature-tag">Task Automation</span>
+                <span class="feature-tag">Code Generation</span>
+                <span class="feature-tag">Content Writing</span>
+                <span class="feature-tag">System Control</span>
+              </div>
+              <p class="hint">Try saying: "Open Chrome", "Write a blog about AI", or "What's the weather?"</p>
+            </div>
+          </div>
+
+          <div class="chat-input-container">
+            <div class="active-apps-bar" id="activeAppsBar"></div>
+            <div class="chat-input-wrapper">
+              <div class="chat-actions-mini">
+                <button class="btn-icon-sm" id="clearChat" title="Clear Chat">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                  </svg>
+                </button>
+                <button class="btn-icon-sm" id="exportChat" title="Export Chat">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                </button>
+              </div>
+              <button class="btn-voice" id="chatVoiceBtn" title="Voice Input">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                </svg>
+              </button>
+              <textarea class="chat-input" id="chatInput" placeholder="Type a message or command..."
+                rows="1"></textarea>
+              <button class="btn-send" id="sendBtn" title="Send">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="22" y1="2" x2="11" y2="13" />
+                  <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                </svg>
+              </button>
+            </div>
+            <div class="typing-indicator" id="typingIndicator">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Voice View -->
+      <div class="view" id="voiceView">
+
+        <div class="voice-container">
+          <div class="voice-visualizer" id="voiceVisualizer">
+            <div class="voice-circle">
+              <button class="voice-btn" id="voiceBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                  <line x1="12" y1="19" x2="12" y2="23" />
+                  <line x1="8" y1="23" x2="16" y2="23" />
+                </svg>
+              </button>
+              <div class="voice-waves">
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            </div>
+            <p class="voice-status" id="voiceStatus">Click to start listening</p>
+          </div>
+
+          <div class="voice-transcript" id="voiceTranscript">
+            <h4>Transcript</h4>
+            <div class="transcript-content">
+              <p class="interim" id="interimText"></p>
+              <p class="final" id="finalText"></p>
+            </div>
+          </div>
+
+          <div class="voice-settings">
+            <h4>Voice Settings</h4>
+            <div class="setting-group">
+              <label>Language</label>
+              <select id="voiceLanguage">
+                <option value="en-US">English (US)</option>
+                <option value="en-GB">English (UK)</option>
+                <option value="es-ES">Spanish</option>
+                <option value="fr-FR">French</option>
+                <option value="de-DE">German</option>
+                <option value="ja-JP">Japanese</option>
+                <option value="zh-CN">Chinese (Simplified)</option>
+              </select>
+            </div>
+            <div class="setting-group">
+              <label>Speech Rate: <span id="rateValue">1.0</span></label>
+              <input type="range" id="speechRate" min="0.5" max="2" step="0.1" value="1">
+            </div>
+            <div class="setting-group">
+              <label>Speech Pitch: <span id="pitchValue">1.0</span></label>
+              <input type="range" id="speechPitch" min="0.5" max="2" step="0.1" value="1">
+            </div>
+            <div class="setting-group">
+              <label>Continuous Listening</label>
+              <label class="toggle">
+                <input type="checkbox" id="continuousListening" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Writer View -->
+      <div class="view" id="writerView">
+
+        <div class="writer-container">
+          <div class="writer-sidebar">
+            <div class="template-selector">
+              <h4>Content Type</h4>
+              <div class="template-grid">
+                <button class="template-btn active" data-type="blog">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="16" y1="13" x2="8" y2="13" />
+                    <line x1="16" y1="17" x2="8" y2="17" />
+                    <polyline points="10 9 9 9 8 9" />
+                  </svg>
+                  <span>Blog Post</span>
+                </button>
+                <button class="template-btn" data-type="email">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                    <polyline points="22,6 12,13 2,6" />
+                  </svg>
+                  <span>Email</span>
+                </button>
+                <button class="template-btn" data-type="code">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="16 18 22 12 16 6" />
+                    <polyline points="8 6 2 12 8 18" />
+                  </svg>
+                  <span>Code</span>
+                </button>
+                <button class="template-btn" data-type="social">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+                  </svg>
+                  <span>Social</span>
+                </button>
+                <button class="template-btn" data-type="resume">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                  <span>Resume</span>
+                </button>
+                <button class="template-btn" data-type="message">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path
+                      d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                  </svg>
+                  <span>Message</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="writer-options">
+              <div class="setting-group">
+                <label>Tone</label>
+                <div class="segmented-control" id="toneSelector">
+                  <button class="segment active" data-value="professional">Professional</button>
+                  <button class="segment" data-value="casual">Casual</button>
+                  <button class="segment" data-value="technical">Technical</button>
+                  <button class="segment" data-value="formal">Formal</button>
+                </div>
+              </div>
+              <div class="setting-group">
+                <label>Length</label>
+                <div class="segmented-control" id="lengthSelector">
+                  <button class="segment" data-value="short">Short</button>
+                  <button class="segment active" data-value="medium">Medium</button>
+                  <button class="segment" data-value="long">Long</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="writer-main">
+            <div class="writer-input-section">
+              <label>What do you want to write about?</label>
+              <textarea id="writerPrompt" placeholder="Enter your topic or prompt..." rows="4"></textarea>
+              <div class="writer-actions">
+                <button class="btn-secondary" id="writerVoiceBtn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                  </svg>
+                  Voice Input
+                </button>
+                <button class="btn-primary" id="generateBtn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                  </svg>
+                  Generate
+                </button>
+              </div>
+            </div>
+
+            <div class="writer-output" id="writerOutput">
+              <div class="output-placeholder">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                </svg>
+                <p>Your generated content will appear here</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Automation View -->
+      <div class="view" id="automationView">
+
+        <div class="automation-container">
+          <div class="command-input-section">
+            <h4>Natural Language Commands</h4>
+            <div class="command-input-wrapper">
+              <input type="text" id="automationInput"
+                placeholder="Try: 'Open Chrome', 'Create folder Documents', 'Search for files'..." />
+              <button class="btn-primary" id="executeCommand">Execute</button>
+            </div>
+
+            <div class="quick-commands">
+              <h4>Quick Commands</h4>
+              <div class="quick-grid">
+                <button class="quick-btn" data-cmd="open chrome">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="2" y1="12" x2="22" y2="12" />
+                    <path
+                      d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                  </svg>
+                  Open Chrome
+                </button>
+                <button class="quick-btn" data-cmd="open vscode">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                    <line x1="8" y1="11" x2="8" y2="11" />
+                    <line x1="16" y1="11" x2="16" y2="11" />
+                  </svg>
+                  Open VS Code
+                </button>
+                <button class="quick-btn" data-cmd="lock">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                  Lock Screen
+                </button>
+                <button class="quick-btn" data-cmd="shutdown">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
+                    <line x1="12" y1="2" x2="12" y2="12" />
+                  </svg>
+                  Shutdown
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="activity-log-section">
+            <h4>Activity Log</h4>
+            <div class="activity-log" id="activityLog">
+              <p class="log-placeholder">No recent activity</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Workflows View -->
+      <div class="view" id="workflowsView">
+        <div class="workflows-container">
+          <div class="workflows-header-inline">
+            <h2>Workflow Automation</h2>
+            <button class="btn-primary" id="createWorkflow">+ New Workflow</button>
+          </div>
+          <div class="preset-workflows">
+            <h4>Preset Workflows</h4>
+            <div class="workflow-list" id="presetWorkflows">
+              <!-- Generated dynamically -->
+            </div>
+          </div>
+
+          <div class="custom-workflows">
+            <h4>Custom Workflows</h4>
+            <div class="workflow-list" id="customWorkflows">
+              <p class="empty-state">No custom workflows yet. Create one to get started!</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings View -->
+      <div class="view" id="settingsView">
+
+        <div class="settings-container">
+          <div class="settings-section">
+            <h4>AI Configuration</h4>
+            <div class="setting-item">
+              <label>OpenRouter API Key</label>
+              <div class="input-group">
+                <input type="password" id="apiKeyInput" placeholder="Enter your API key" />
+                <button class="btn-secondary" id="saveApiKey">Save</button>
+              </div>
+              <small>Get your key from <a href="#" id="openrouterLink">openrouter.ai/keys</a></small>
+            </div>
+            <div class="setting-item">
+              <label>AI Model</label>
+              <select id="aiModel">
+                <option value="google/gemini-2.0-flash-001">Google Gemini 2.0 Flash</option>
+                <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet</option>
+                <option value="openai/gpt-4o">GPT-4o</option>
+                <option value="meta-llama/llama-3.2-70b-instruct">Llama 3.2 70B</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h4>Appearance</h4>
+            <div class="setting-item">
+              <label>Theme</label>
+              <select id="themeSelect">
+                <option value="dark">Dark</option>
+                <option value="light">Light</option>
+                <option value="auto">Auto</option>
+              </select>
+            </div>
+            <div class="setting-item">
+              <label>Font Size</label>
+              <select id="fontSize">
+                <option value="small">Small</option>
+                <option value="medium" selected>Medium</option>
+                <option value="large">Large</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h4>Voice & Speech</h4>
+            <div class="setting-item">
+              <label>Text-to-Speech</label>
+              <label class="toggle">
+                <input type="checkbox" id="ttsEnabled" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="setting-item">
+              <label>Auto-Read AI Responses</label>
+              <label class="toggle">
+                <input type="checkbox" id="autoTTS">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h4>Data & Storage</h4>
+            <div class="setting-item">
+              <button class="btn-secondary" id="exportData">Export All Data</button>
+              <button class="btn-secondary" id="importData">Import Data</button>
+              <button class="btn-danger" id="clearData">Clear All Data</button>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h4>About</h4>
+            <div class="about-info">
+              <p><strong>AI Desktop Assistant</strong></p>
+              <p>Version 1.0.0</p>
+              <p>Built with Electron + OpenRouter</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast Notifications -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+
+</html>
