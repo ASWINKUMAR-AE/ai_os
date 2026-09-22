@@ -15,6 +15,26 @@ export class AIOrchestrator {
   detectFastPathIntent(input) {
     const clean = input.trim().toLowerCase();
 
+    if (/^(?:hi|hello|hey|greetings|good morning|good afternoon|good evening|howdy)\b/i.test(clean)) {
+      return {
+        intent: 'CHAT',
+        confidence: 0.99,
+        goal: 'Respond to greeting',
+        actions: [{ type: 'quick_response', parameters: { text: "Hello! I am your ZetHub AI Desktop OS Assistant. How can I help you today?" } }],
+        requires_confirmation: false
+      };
+    }
+
+    if (/^(?:who are you|what is your name|what can you do|help)\b/i.test(clean)) {
+      return {
+        intent: 'CHAT',
+        confidence: 0.99,
+        goal: 'Explain AI capabilities',
+        actions: [{ type: 'quick_response', parameters: { text: "I am ZetHub AI, your autonomous desktop employee. I can launch applications, write documents, generate spreadsheets & presentations, automate desktop workflows, and search files." } }],
+        requires_confirmation: false
+      };
+    }
+
     if (clean === 'time' || clean.includes('current time')) {
       return {
         intent: 'SYSTEM_COMMAND',
@@ -89,7 +109,87 @@ export class AIOrchestrator {
       };
     }
 
+    // Fast-path Document Creation (Word / DOCX)
+    if (/\b(?:create|generate|make)\s+(?:a\s+)?(?:word\s+doc(?:ument)?|docx|report)\b/i.test(clean)) {
+      return {
+        intent: 'DOCUMENT_CREATION',
+        confidence: 0.95,
+        goal: 'Generate Word document',
+        actions: [{ type: 'generate_document', parameters: { topic: clean } }],
+        requires_confirmation: false
+      };
+    }
+
+    // Fast-path Spreadsheet Creation (Excel / XLSX)
+    if (/\b(?:create|generate|make)\s+(?:an?\s+)?(?:excel|spreadsheet|tracker)\b/i.test(clean)) {
+      return {
+        intent: 'SPREADSHEET',
+        confidence: 0.95,
+        goal: 'Generate Excel spreadsheet',
+        actions: [{ type: 'create_spreadsheet', parameters: { topic: clean } }],
+        requires_confirmation: false
+      };
+    }
+
+    // Fast-path Presentation Creation (PowerPoint / PPTX)
+    if (/\b(?:create|generate|make)\s+(?:a\s+)?(?:powerpoint|presentation|deck|slides)\b/i.test(clean)) {
+      return {
+        intent: 'PRESENTATION',
+        confidence: 0.95,
+        goal: 'Generate PowerPoint presentation',
+        actions: [{ type: 'create_presentation', parameters: { topic: clean } }],
+        requires_confirmation: false
+      };
+    }
+
+    // Fast-path File Operations
+    if (/\b(?:show|list|find|search)\s+(?:me\s+)?(?:the\s+)?files\b/i.test(clean)) {
+      return {
+        intent: 'FILE_OPERATION',
+        confidence: 0.95,
+        goal: 'Search files',
+        actions: [{ type: 'search_files', parameters: { searchPath: '.' } }],
+        requires_confirmation: false
+      };
+    }
+
+    if (/\b(?:delete|remove)\s+(?:this|the)\s+file\b/i.test(clean)) {
+      return {
+        intent: 'FILE_OPERATION',
+        confidence: 0.95,
+        goal: 'Delete file',
+        actions: [{ type: 'delete_file', parameters: {} }],
+        requires_confirmation: true
+      };
+    }
+
+    // Fast-path Shell Commands
+    if (/\b(?:run|execute)\s+(?:this\s+)?(?:safe\s+)?(?:shell|cmd|command)\b/i.test(clean)) {
+      return {
+        intent: 'SYSTEM_COMMAND',
+        confidence: 0.95,
+        goal: 'Run shell command',
+        actions: [{ type: 'run_shell_command', parameters: { command: clean } }],
+        requires_confirmation: false
+      };
+    }
+
+    // Fast-path Web Research
+    if (/\b(?:search|find|research)\s+(?:for\s+)?information\b/i.test(clean)) {
+      return {
+        intent: 'WEB_RESEARCH',
+        confidence: 0.95,
+        goal: 'Web research',
+        actions: [{ type: 'research_files', parameters: { query: clean } }],
+        requires_confirmation: false
+      };
+    }
+
     return null; // Fall through to AI reasoning
+  }
+
+  async classifyIntent(userMessage, context = {}) {
+    return this.processRequest(userMessage, context);
   }
 
   // Orchestrate request processing
@@ -112,7 +212,7 @@ CHAT, QUESTION, SYSTEM_COMMAND, FILE_OPERATION, DOCUMENT_CREATION, DOCUMENT_EDIT
 
 CONTEXT:
 * Current Time: ${context.currentTime || new Date().toLocaleString()}
-* Platform: ${context.platform || window.electronAPI?.platform || 'win32'}
+* Platform: ${context.platform || (typeof window !== 'undefined' ? window.electronAPI?.platform : 'win32') || 'win32'}
 * Active Application: ${context.linkedApp || context.activeApp || 'None'}
 
 STRICT JSON OUTPUT FORMAT ONLY (NO MARKDOWN WRAPPERS):

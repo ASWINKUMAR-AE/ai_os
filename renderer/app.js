@@ -4,6 +4,11 @@ import voiceModule from '../ai_modules/voice.js';
 import commandEngine from '../ai_modules/commands.js';
 import automationModule from '../modules/automation.js';
 import storageModule from '../modules/storage.js';
+import memoryDb from '../memory/database.js';
+import MigrationManager from '../memory/migration.js';
+import ProjectManager from '../projects/manager.js';
+import TaskManager from '../tasks/manager.js';
+import taskEngine from '../automation/engine.js';
 
 // App State
 const state = {
@@ -177,7 +182,15 @@ function addActiveApp(appName) {
 }
 
 // Initialize App
-document.addEventListener('DOMContentLoaded', async () => {
+async function startApp() {
+  window.switchView = switchView;
+  window.sendChatMessage = sendChatMessage;
+  window.checkAPIStatus = checkAPIStatus;
+  window.showToast = showToast;
+
+  if (window._appInitialized) return;
+  window._appInitialized = true;
+
   await initializeApp();
   setupNavigation();
   setupChatView();
@@ -187,10 +200,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupWorkflowsView();
   setupWindowControls();
   setupSettingsView();
+  setupCommandPalette();
+  setupConfirmationModal();
   loadSavedSettings();
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', startApp);
+} else {
+  startApp();
+}
 
 async function initializeApp() {
+  // Run migration manager to convert legacy stores
+  MigrationManager.migrate();
+
   // Initialize voice module
   voiceModule.initialize();
   
@@ -204,17 +228,67 @@ async function initializeApp() {
   }
 }
 
+function setupCommandPalette() {
+  const modal = document.getElementById('commandPaletteModal');
+  const input = document.getElementById('commandPaletteInput');
+  const suggestions = document.querySelectorAll('#commandPaletteSuggestions .suggestion-item');
+
+  document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.code === 'Space') {
+      e.preventDefault();
+      modal.style.display = modal.style.display === 'none' ? 'flex' : 'none';
+      if (modal.style.display === 'flex') input.focus();
+    } else if (e.key === 'Escape' && modal.style.display === 'flex') {
+      modal.style.display = 'none';
+    }
+  });
+
+  input?.addEventListener('keydown', async (e) => {
+    if (e.key === 'Enter') {
+      const val = input.value.trim();
+      if (val) {
+        modal.style.display = 'none';
+        input.value = '';
+        switchView('chat');
+        sendChatMessage(val);
+      }
+    }
+  });
+
+  suggestions.forEach(item => {
+    item.addEventListener('click', () => {
+      const cmd = item.dataset.cmd;
+      modal.style.display = 'none';
+      switchView('chat');
+      sendChatMessage(cmd);
+    });
+  });
+}
+
+function setupConfirmationModal() {
+  const modal = document.getElementById('confirmationModal');
+  const cancelBtn = document.getElementById('cancelConfirmBtn');
+  const proceedBtn = document.getElementById('proceedConfirmBtn');
+
+  cancelBtn?.addEventListener('click', () => {
+    modal.style.display = 'none';
+    if (window._currentActionReject) window._currentActionReject('User cancelled action');
+  });
+
+  proceedBtn?.addEventListener('click', () => {
+    modal.style.display = 'none';
+    if (window._currentActionResolve) window._currentActionResolve(true);
+  });
+}
+
 async function checkAPIStatus() {
-  const apiKey = await window.electronAPI.getEnv('OPENROUTER_API_KEY');
   const statusDot = document.querySelector('#apiStatus .status-dot');
   const statusText = document.querySelector('#apiStatus span:last-child');
   
-  if (apiKey && apiKey !== 'your_openrouter_api_key_here') {
+  if (statusDot && statusText) {
     statusDot.classList.remove('offline');
     statusDot.classList.add('online');
-    statusText.textContent = 'API Ready';
-  } else {
-    statusText.textContent = 'API Key Missing';
+    statusText.textContent = 'API Ready (HOSIT)';
   }
 }
 
@@ -223,18 +297,23 @@ function setupNavigation() {
   const navItems = document.querySelectorAll('.nav-item');
   
   navItems.forEach(item => {
-    item.addEventListener('click', () => {
+    item.addEventListener('click', (e) => {
+      e.preventDefault();
       const view = item.dataset.view;
       switchView(view);
-      
-      // Update active state
-      navItems.forEach(nav => nav.classList.remove('active'));
-      item.classList.add('active');
     });
   });
 }
 
 function switchView(viewName) {
+  let targetView = document.getElementById(`${viewName}View`);
+  
+  // If target view container does not exist in DOM, safely keep chat view active
+  if (!targetView) {
+    targetView = document.getElementById('chatView');
+    viewName = 'chat';
+  }
+
   state.currentView = viewName;
   
   // Hide all views
@@ -243,10 +322,16 @@ function switchView(viewName) {
   });
   
   // Show selected view
-  const targetView = document.getElementById(`${viewName}View`);
-  if (targetView) {
-    targetView.classList.add('active');
-  }
+  targetView.classList.add('active');
+
+  // Update active class on sidebar items
+  document.querySelectorAll('.nav-item').forEach(nav => {
+    if (nav.dataset.view === viewName) {
+      nav.classList.add('active');
+    } else {
+      nav.classList.remove('active');
+    }
+  });
   
   // Special handling for specific views
   if (viewName === 'workflows') {
@@ -656,10 +741,11 @@ async function executeUnifiedActions(actions) {
     try {
       switch (action) {
         case 'openApplication': {
-          const appRes = await window.electronAPI.openApp(parameters.app_name);
+          const targetApp = parameters?.app_name || parameters?.appName || parameters?.app || parameters?.application || parameters?.name || (typeof parameters === 'string' ? parameters : 'notepad');
+          const appRes = await window.electronAPI.openApp(targetApp);
           success = appRes.success;
-          msg = success ? `🚀 Opened ${parameters.app_name}` : `❌ Failed to open ${parameters.app_name}: ${appRes.error}`;
-          if (success) addActiveApp(parameters.app_name);
+          msg = success ? `🚀 Opened ${targetApp}` : `❌ Failed to open ${targetApp}: ${appRes.error}`;
+          if (success) addActiveApp(targetApp);
           break;
         }
 
@@ -1328,17 +1414,17 @@ function setupSettingsView() {
   const openrouterLink = document.getElementById('openrouterLink');
   
   // Load saved API key (masked)
-  storageModule.getAPIKey('openrouter').then(key => {
-    if (key) {
+  try {
+    const key = storageModule.get('api_key_openrouter', '');
+    if (key && apiKeyInput) {
       apiKeyInput.value = key;
     }
-  });
+  } catch (e) {}
   
-  saveApiKey.addEventListener('click', async () => {
+  saveApiKey?.addEventListener('click', async () => {
     const key = apiKeyInput.value.trim();
     if (key) {
-      await storageModule.saveAPIKey('openrouter', key);
-      // Also update environment variable (would need main process support)
+      storageModule.set('api_key_openrouter', key);
       showToast('Saved', 'API key saved securely', 'success');
       checkAPIStatus();
     }
@@ -1579,6 +1665,20 @@ function setupWindowControls() {
     });
   }
 }
+
+// Global Command Palette Shortcut (Ctrl + Space)
+document.addEventListener('keydown', (e) => {
+  if (e.ctrlKey && e.code === 'Space') {
+    e.preventDefault();
+    const modal = document.getElementById('commandPaletteModal');
+    if (modal) {
+      modal.style.display = modal.style.display === 'none' ? 'flex' : 'none';
+      if (modal.style.display === 'flex') {
+        document.getElementById('commandPaletteInput')?.focus();
+      }
+    }
+  }
+});
 
 // Expose state for debugging
 window.aiAssistantState = state;

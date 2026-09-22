@@ -290,7 +290,8 @@ export class ProviderManager {
   }
 
   setActiveProvider(name) {
-    const lower = name.toLowerCase();
+    if (!name) return false;
+    const lower = String(name).toLowerCase();
     if (this.providers.has(lower)) {
       this.activeProviderName = lower;
       console.log(`[ProviderManager] Active AI Provider set to: ${name}`);

@@ -56,6 +56,9 @@ Respond with ONLY the JSON object if actions are required. Be verbose and creati
   }
 
   async initialize() {
+    if (typeof window !== 'undefined' && window.electronAPI && window.electronAPI.getEnv) {
+      this.apiKey = await window.electronAPI.getEnv('OPENROUTER_API_KEY');
+    }
     await aiRouter.initialize();
     this.loadHistory();
   }
@@ -66,12 +69,8 @@ Respond with ONLY the JSON object if actions are required. Be verbose and creati
 
   // Main chat function with streaming support
   async chat(message, onStream = null, systemPrompt = null) {
-    if (!this.apiKey) {
+    if (!aiRouter.initialized) {
       await this.initialize();
-    }
-
-    if (!this.apiKey || this.apiKey === 'your_openrouter_api_key_here') {
-      return { error: 'API key not configured. Please set OPENROUTER_API_KEY in .env file' };
     }
 
     const messages = [];
@@ -137,7 +136,9 @@ Respond with ONLY the JSON object if actions are required. Be verbose and creati
   // Save history to localStorage
   saveHistory() {
     try {
-      localStorage.setItem('ai_conversation_history', JSON.stringify(this.conversationHistory));
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('ai_conversation_history', JSON.stringify(this.conversationHistory));
+      }
     } catch (e) {
       console.error('Failed to save history:', e);
     }
@@ -146,9 +147,11 @@ Respond with ONLY the JSON object if actions are required. Be verbose and creati
   // Load history from localStorage
   loadHistory() {
     try {
-      const saved = localStorage.getItem('ai_conversation_history');
-      if (saved) {
-        this.conversationHistory = JSON.parse(saved);
+      if (typeof localStorage !== 'undefined') {
+        const saved = localStorage.getItem('ai_conversation_history');
+        if (saved) {
+          this.conversationHistory = JSON.parse(saved);
+        }
       }
     } catch (e) {
       console.error('Failed to load history:', e);
@@ -158,7 +161,9 @@ Respond with ONLY the JSON object if actions are required. Be verbose and creati
   // Clear conversation history
   clearHistory() {
     this.conversationHistory = [];
-    localStorage.removeItem('ai_conversation_history');
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem('ai_conversation_history');
+    }
   }
 
   // Get conversation history
@@ -264,88 +269,68 @@ User Message: "${message}"`;
 
   // New Unified AI Core Processing
   async processUnifiedInput(message, context = {}) {
-    if (!this.apiKey) await this.initialize();
+    if (!aiRouter.initialized) {
+      await this.initialize();
+    }
     
-    const systemPrompt = this.getDynamicPrompt(context);
-    
-    const messages = [
-      { role: 'system', content: systemPrompt },
-      ...this.conversationHistory.slice(-6), // context
-      { role: 'user', content: message }
-    ];
-
     try {
-      const response = await fetch(this.apiUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: this.model,
-          messages: messages,
-          temperature: 0.3, // Lower temperature for more consistent JSON
-          max_tokens: 4000,
-          response_format: { type: "json_object" } // Enforce JSON if model supports it
-        })
+      const plan = await aiOrchestrator.processRequest(message, context);
+      
+      const actions = (plan.actions || []).map(act => {
+        let type = act.type || act.action || '';
+        if (type === 'open_app' || type === 'openApp') type = 'openApplication';
+        if (type === 'write_to_app' || type === 'writeToApp') type = 'writeToApp';
+        if (type === 'create_file' || type === 'createFile') type = 'createFile';
+        if (type === 'create_folder' || type === 'createFolder') type = 'createFolder';
+        if (type === 'search_files' || type === 'searchFiles') type = 'searchFiles';
+        if (type === 'system_control' || type === 'systemControl') type = 'systemControl';
+        if (type === 'create_document' || type === 'createDocument') type = 'createDocument';
+        if (type === 'run_workflow' || type === 'runWorkflow') type = 'runWorkflow';
+        
+        return {
+          action: type,
+          parameters: act.parameters || {}
+        };
       });
 
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      
-      const data = await response.json();
-      const content = data.choices[0]?.message?.content;
-      
-      // Attempt to parse JSON
-      let result;
-      try {
-        let cleanContent = content.trim();
-        // Extract JSON if AI wrapped it in markdown code blocks
-        if (cleanContent.includes('```json')) {
-          cleanContent = cleanContent.split('```json')[1].split('```')[0].trim();
-        } else if (cleanContent.includes('```')) {
-          cleanContent = cleanContent.split('```')[1].split('```')[0].trim();
+      if (plan.intent === 'CHAT' && (!actions.length || actions[0].action === 'chat_response' || actions[0].action === 'quick_response')) {
+        let responseText = '';
+        if (actions.length > 0 && actions[0].parameters && actions[0].parameters.text) {
+          responseText = actions[0].parameters.text;
+        } else if (plan.explanation || plan.response) {
+          responseText = plan.explanation || plan.response;
+        } else {
+          const chatResult = await this.chat(message);
+          responseText = chatResult.content || 'I am ready to assist you.';
         }
-        
-        // If it starts with { and ends with }, attempt to find the boundaries
-        if (!cleanContent.startsWith('{')) {
-          const start = cleanContent.indexOf('{');
-          const end = cleanContent.lastIndexOf('}');
-          if (start !== -1 && end !== -1) {
-            cleanContent = cleanContent.substring(start, end + 1);
-          }
-        }
-        
-        result = JSON.parse(cleanContent);
-      } catch (e) {
-        console.warn('JSON parsing failed, attempting repair:', e);
-        try {
-          // Attempt to fix common truncation by adding closing braces
-          if (!cleanContent.endsWith('}')) {
-             let repaired = cleanContent;
-             if (repaired.lastIndexOf('{') > repaired.lastIndexOf('}')) {
-               repaired += ' }';
-               if (repaired.split('{').length > repaired.split('}').length) repaired += ' ] }';
-               result = JSON.parse(repaired);
-             }
-          }
-        } catch (repairError) {
-          result = {
-            type: "chat",
-            intent: "none",
-            confidence: 0.7,
-            response: content,
-            actions: []
-          };
-        }
+
+        return {
+          type: 'chat',
+          intent: 'CHAT',
+          confidence: plan.confidence || 0.95,
+          response: responseText,
+          actions: []
+        };
       }
 
-      // Add to history correctly
-      this.addToHistory(message, result.response || content);
-      
-      return result;
+      return {
+        type: plan.intent ? plan.intent.toLowerCase() : 'task',
+        intent: plan.intent || 'TASK',
+        confidence: plan.confidence || 0.95,
+        response: plan.explanation || plan.goal || `Executing task: ${message}`,
+        actions: actions,
+        content: plan.explanation || ''
+      };
     } catch (error) {
       console.error('Unified Processing Error:', error);
-      return { error: error.message };
+      const fallbackChat = await this.chat(message);
+      return {
+        type: 'chat',
+        intent: 'CHAT',
+        confidence: 0.8,
+        response: fallbackChat.content || `Processed: ${message}`,
+        actions: []
+      };
     }
   }
 

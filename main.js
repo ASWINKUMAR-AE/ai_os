@@ -5,7 +5,7 @@ const fs = require('fs');
 const os = require('os');
 
 // Load environment variables
-require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 let mainWindow;
 let isRecording = false;
@@ -97,7 +97,18 @@ ipcMain.handle('execute-command', async (event, command) => {
 });
 
 // Open external applications
-ipcMain.handle('open-app', async (event, appName) => {
+ipcMain.handle('open-app', async (event, appInput) => {
+  let appName = '';
+  if (typeof appInput === 'string') {
+    appName = appInput;
+  } else if (appInput && typeof appInput === 'object') {
+    appName = appInput.appName || appInput.app_name || appInput.app || appInput.application || appInput.name || '';
+  }
+
+  if (!appName || typeof appName !== 'string') {
+    return { success: false, error: 'Application name was not specified' };
+  }
+
   const platform = os.platform();
   let command;
 
@@ -197,6 +208,7 @@ ipcMain.handle('open-app', async (event, appName) => {
 
 // Helper for split screen management on Windows
 async function handleWinSplitScreen(appName) {
+  if (!appName || typeof appName !== 'string') return;
   const primaryDisplay = screen.getPrimaryDisplay();
   const { width: screenWidth, height: screenHeight } = primaryDisplay.workArea;
   

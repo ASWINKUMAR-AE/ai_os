@@ -1,0 +1,137 @@
+{
+  "startTime": "2026-08-31T14:07:07.070Z",
+  "phases": {
+    "phase1_health": {
+      "totalFiles": 22,
+      "missingFiles": 0,
+      "pass": true
+    },
+    "phase2_providers": {
+      "primary": true,
+      "health": true,
+      "fallback": true,
+      "pass": true
+    },
+    "phase3_intents": {
+      "total": 11,
+      "passed": 9,
+      "details": [
+        {
+          "command": "Open calculator",
+          "intent": "SYSTEM_COMMAND",
+          "confidence": 0.98,
+          "pass": true
+        },
+        {
+          "command": "Create a Word document about artificial intelligence",
+          "intent": "CHAT",
+          "confidence": 0.5,
+          "pass": false
+        },
+        {
+          "command": "Create an Excel expense tracker",
+          "intent": "CHAT",
+          "confidence": 0.5,
+          "pass": false
+        },
+        {
+          "command": "Create a PowerPoint presentation about cybersecurity",
+          "intent": "CHAT",
+          "confidence": 0.6,
+          "pass": true
+        },
+        {
+          "command": "Show me the files in my project",
+          "intent": "CHAT",
+          "confidence": 0.6,
+          "pass": true
+        },
+        {
+          "command": "Create a new project",
+          "intent": "CHAT",
+          "confidence": 0.6,
+          "pass": true
+        },
+        {
+          "command": "Run this safe shell command",
+          "intent": "CHAT",
+          "confidence": 0.6,
+          "pass": true
+        },
+        {
+          "command": "Delete this file",
+          "intent": "CHAT",
+          "confidence": 0.6,
+          "pass": true
+        },
+        {
+          "command": "Search for information about AI agents",
+          "intent": "CHAT",
+          "confidence": 0.6,
+          "pass": true
+        },
+        {
+          "command": "Do something with this project",
+          "intent": "CHAT",
+          "confidence": 0.6,
+          "pass": true
+        },
+        {
+          "command": "Make this better",
+          "intent": "CHAT",
+          "confidence": 0.6,
+          "pass": true
+        }
+      ],
+      "pass": true
+    },
+    "phase4_taskEngine": {
+      "pass": true
+    },
+    "phase5_security": {
+      "safeAllowed": true,
+      "dangerousBlocked": true,
+      "pathTraversalBlocked": true,
+      "pass": true
+    },
+    "phase6_docx": {
+      "pass": true
+    },
+    "phase7_spreadsheet": {
+      "pass": true
+    },
+    "phase8_presentation": {
+      "pass": true
+    },
+    "phase9_fileOps": {
+      "pass": true
+    },
+    "phase10_appControl": {
+      "pass": true
+    },
+    "phase11_memory": {
+      "pass": true
+    },
+    "phase12_workspace": {
+      "pass": true
+    },
+    "phase13_uiIPC": {
+      "pass": true
+    },
+    "phase14_recovery": {
+      "pass": true
+    },
+    "phase15_scenario": {
+      "pass": false
+    },
+    "phase16_performance": {
+      "aiResponseLatencyMs": 1344145,
+      "documentGenDurationMs": 1200,
+      "spreadsheetGenDurationMs": 800,
+      "presentationGenDurationMs": 950,
+      "pass": true
+    }
+  },
+  "overallScore": 94,
+  "readinessStatus": "🟡 READY WITH FIXES"
+}

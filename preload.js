@@ -9,9 +9,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   searchFiles: (searchTerm, searchPath) => ipcRenderer.invoke('search-files', searchTerm, searchPath),
   systemControl: (action) => ipcRenderer.invoke('system-control', action),
   pasteToApp: (appName, text) => ipcRenderer.invoke('paste-to-app', { appName, text }),
-  saveDocument: (title, content, format) => ipcRenderer.invoke('save-document', { title, content, format }),
+  saveDocument: (arg1, content, format) => typeof arg1 === 'object' ? ipcRenderer.invoke('save-document', arg1) : ipcRenderer.invoke('save-document', { title: arg1, content, format }),
   openPath: (path) => ipcRenderer.invoke('open-path', path),
-  createFile: (filePath, content) => ipcRenderer.invoke('create-file', { filePath, content }),
+  createFile: (arg1, content) => typeof arg1 === 'object' ? ipcRenderer.invoke('create-file', arg1) : ipcRenderer.invoke('create-file', { filePath: arg1, content }),
   
   // External links
   openExternal: (url) => ipcRenderer.invoke('open-external', url),
